@@ -58,7 +58,10 @@ if (visiblePapers !== 2) throw new Error(`Expected 2 filtered papers, found ${vi
 
 await desktop.getByText("浏览全部中英文概念").click();
 const directoryConcepts = await desktop.locator(".directory-list button").count();
-if (directoryConcepts !== 169) throw new Error(`Expected 169 directory links, found ${directoryConcepts}`);
+if (directoryConcepts !== 254) throw new Error(`Expected 254 directory links, found ${directoryConcepts}`);
+
+const glossarySourceLinks = await desktop.locator(".glossary-sources a").count();
+if (glossarySourceLinks !== 4) throw new Error(`Expected 4 glossary source links, found ${glossarySourceLinks}`);
 
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
 await mobile.goto(baseUrl, { waitUntil: "networkidle" });
@@ -74,4 +77,4 @@ await mobile.screenshot({ path: mobileShot, fullPage: true });
 
 await browser.close();
 
-console.log(JSON.stringify({ baseUrl, diagramChecks: diagramChecks.length, visiblePapers, directoryConcepts, mobileOverflow: overflow, consoleErrors }, null, 2));
+console.log(JSON.stringify({ baseUrl, diagramChecks: diagramChecks.length, visiblePapers, directoryConcepts, glossarySourceLinks, mobileOverflow: overflow, consoleErrors }, null, 2));

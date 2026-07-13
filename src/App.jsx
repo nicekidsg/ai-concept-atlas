@@ -19,7 +19,7 @@ import {
   Wrench,
   X,
 } from "@phosphor-icons/react";
-import { categoryDetails, glossaryEntries, papersByCategory } from "./glossary";
+import { categoryDetails, glossaryEntries, glossarySources, papersByCategory } from "./glossary";
 import { buildDiagram, buildExistingDiagram, diagramTypeLabels } from "./diagrams";
 
 const concepts = {
@@ -953,6 +953,14 @@ export function App() {
           </div>
         </details>
         <p id="about">论文与案例均提供原始来源；热度数据为 2026-07-13 的公开快照。</p>
+        <div className="glossary-sources" aria-label="词库参考来源">
+          <span>词库参考</span>
+          {glossarySources.map((source) => (
+            <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
+              {source.label}<ArrowSquareOut size={13} />
+            </a>
+          ))}
+        </div>
       </footer>
 
       {registrationOpen && (
