@@ -18,6 +18,7 @@ import {
   Wrench,
 } from "@phosphor-icons/react";
 import { categoryDetails, glossaryEntries, papersByCategory } from "./glossary";
+import { buildDiagram, buildExistingDiagram, diagramTypeLabels } from "./diagrams";
 
 const concepts = {
   loop: {
@@ -384,6 +385,10 @@ const concepts = {
 
 const flowIcons = [Eye, Brain, Wrench, CheckCircle];
 
+Object.entries(concepts).forEach(([key, concept]) => {
+  concept.diagram = buildExistingDiagram(key, concept);
+});
+
 Object.assign(
   concepts,
   Object.fromEntries(
@@ -408,6 +413,7 @@ Object.assign(
           ["一眼记住", entry.takeaway, Sparkle],
         ],
         steps: category.steps.map(([label, caption], index) => [label, caption, flowIcons[index]]),
+        diagram: buildDiagram(entry.key, entry),
         papers: papersByCategory[entry.category],
       }];
     }),
@@ -467,6 +473,153 @@ function EvidenceLink({ href, label }) {
     <a className="evidence-link" href={href} target="_blank" rel="noreferrer" aria-label={label}>
       <ArrowSquareOut size={20} weight="regular" />
     </a>
+  );
+}
+
+const diagramIcons = {
+  input: Eye,
+  observe: Eye,
+  search: MagnifyingGlass,
+  reason: Brain,
+  act: Wrench,
+  verify: CheckCircle,
+  goal: Sparkle,
+  memory: BookmarkSimple,
+  link: LinkIcon,
+  output: ArrowRight,
+  generate: Robot,
+  retry: ArrowsClockwise,
+  orchestrate: ShareNetwork,
+  share: ShareNetwork,
+  server: Wrench,
+  success: CheckCircle,
+  stop: Circle,
+  fast: ArrowRight,
+  spark: Sparkle,
+};
+
+function DiagramNode({ node, className = "" }) {
+  const [label, caption, role] = node;
+  const Icon = diagramIcons[role] ?? Brain;
+  return (
+    <div className={`diagram-node ${className}`}>
+      <Icon size={29} weight="regular" aria-hidden="true" />
+      <strong>{label}</strong>
+      <span>{caption}</span>
+    </div>
+  );
+}
+
+function DiagramArrow() {
+  return (
+    <span className="diagram-arrow" aria-hidden="true">
+      <ArrowRight className="desktop-arrow" size={23} weight="bold" />
+      <ArrowDown className="mobile-arrow" size={23} weight="bold" />
+    </span>
+  );
+}
+
+function DiagramStage({ diagram }) {
+  if (diagram.type === "cycle") {
+    return (
+      <div className="diagram-stage diagram-cycle">
+        {diagram.nodes.map((node, index) => (
+          <DiagramNode node={node} className={`cycle-node cycle-node-${index + 1}`} key={node[0]} />
+        ))}
+        <ArrowsClockwise className="cycle-mark" size={58} weight="regular" aria-hidden="true" />
+      </div>
+    );
+  }
+
+  if (diagram.type === "pipeline") {
+    return (
+      <div className="diagram-stage diagram-pipeline">
+        {diagram.nodes.map((node, index) => (
+          <div className="pipeline-step" key={node[0]}>
+            <DiagramNode node={node} />
+            {index < diagram.nodes.length - 1 && <DiagramArrow />}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (diagram.type === "hub") {
+    return (
+      <div className="diagram-stage diagram-hub">
+        <DiagramNode node={diagram.center} className="hub-center" />
+        {diagram.nodes.map((node, index) => (
+          <DiagramNode node={node} className={`hub-node hub-node-${index + 1}`} key={node[0]} />
+        ))}
+      </div>
+    );
+  }
+
+  if (diagram.type === "layers") {
+    return (
+      <div className="diagram-stage diagram-layers">
+        {diagram.nodes.map((node, index) => (
+          <div className="layer-step" key={node[0]}>
+            <DiagramNode node={node} />
+            {index < diagram.nodes.length - 1 && <ArrowDown size={20} weight="bold" aria-hidden="true" />}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (diagram.type === "branch") {
+    return (
+      <div className="diagram-stage diagram-branch">
+        <DiagramNode node={diagram.nodes[0]} className="branch-root" />
+        <ArrowDown className="branch-arrow branch-arrow-first" size={22} weight="bold" aria-hidden="true" />
+        <div className="branch-options">
+          <DiagramNode node={diagram.nodes[1]} />
+          <DiagramNode node={diagram.nodes[2]} />
+        </div>
+        <ArrowDown className="branch-arrow" size={22} weight="bold" aria-hidden="true" />
+        <DiagramNode node={diagram.nodes[3]} className="branch-result" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="diagram-stage diagram-gate">
+      <div className="gate-path">
+        <DiagramNode node={diagram.nodes[0]} />
+        <DiagramArrow />
+        <DiagramNode node={diagram.nodes[1]} className="gate-core" />
+      </div>
+      <ArrowDown className="gate-arrow" size={23} weight="bold" aria-hidden="true" />
+      <div className="gate-outcomes">
+        <DiagramNode node={diagram.nodes[2]} className="gate-pass" />
+        <DiagramNode node={diagram.nodes[3]} className="gate-stop" />
+      </div>
+    </div>
+  );
+}
+
+function ConceptDiagram({ concept }) {
+  const { diagram } = concept;
+  const nodeLabels = diagram.nodes.map(([label]) => label);
+  const summary = diagram.type === "hub"
+    ? `${diagram.center[0]} ↔ ${nodeLabels.join(" · ")}`
+    : diagram.type === "branch"
+      ? `${nodeLabels[0]} → ${nodeLabels[1]} / ${nodeLabels[2]} → ${nodeLabels[3]}`
+      : diagram.type === "gate"
+        ? `${nodeLabels[0]} → ${nodeLabels[1]} → ${nodeLabels[2]} / ${nodeLabels[3]}`
+        : `${nodeLabels.join(" → ")}${diagram.type === "cycle" ? " ↺" : ""}`;
+
+  return (
+    <aside className={`mechanism mechanism-${diagram.type}`} aria-label={`${concept.title}${diagramTypeLabels[diagram.type]}`}>
+      <div className="diagram-heading">
+        <span>{diagramTypeLabels[diagram.type]}</span>
+        <strong>{concept.title}</strong>
+        <p>{concept.takeaway}</p>
+      </div>
+      <DiagramStage diagram={diagram} />
+      <p className="flow-summary">{summary}</p>
+    </aside>
   );
 }
 
@@ -586,26 +739,7 @@ export function App() {
           </div>
         </article>
 
-        <aside className="mechanism" aria-label={`${concept.title}机制图`}>
-          <div className="flow-diagram">
-            <div className="mechanism-title">
-              <ArrowsClockwise size={45} weight="regular" />
-              <strong>{concept.title}</strong>
-              <span>{concept.takeaway}</span>
-            </div>
-            {concept.steps.map(([label, caption, Icon], index) => (
-              <div className={`flow-fragment flow-fragment-${index + 1}`} key={label}>
-                <div className="flow-node">
-                  <Icon size={31} weight="regular" />
-                  <strong>{label}</strong>
-                  <span>{caption}</span>
-                </div>
-                {index < concept.steps.length - 1 && <ArrowDown className="mobile-arrow" size={24} weight="bold" />}
-              </div>
-            ))}
-          </div>
-          <p className="flow-summary">{concept.steps.map(([label]) => label).join(" → ")}</p>
-        </aside>
+        <ConceptDiagram concept={concept} />
       </section>
 
       <section className="evidence" aria-label="论文与优秀案例">

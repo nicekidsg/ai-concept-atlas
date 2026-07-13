@@ -22,17 +22,32 @@ desktop.on("console", (message) => {
 await desktop.goto(baseUrl, { waitUntil: "networkidle" });
 await desktop.screenshot({ path: desktopShot, fullPage: true });
 
-await desktop.getByLabel("输入一个 AI 概念").fill("agent");
-await desktop.getByRole("button", { name: "搜索" }).click();
-await desktop.getByRole("heading", { name: "智能体" }).waitFor();
+const diagramChecks = [
+  ["loop", "智能体循环", "cycle"],
+  ["agent", "智能体", "hub"],
+  ["词元", "词元", "pipeline"],
+  ["skill", "智能体技能", "layers"],
+  ["MCP", "模型上下文协议", "hub"],
+  ["RAG", "检索增强生成", "pipeline"],
+  ["RLHF", "人类反馈强化学习", "pipeline"],
+  ["MoE", "专家混合模型", "hub"],
+  ["test-time compute", "推理时计算", "branch"],
+  ["guardrail", "智能体护栏", "gate"],
+];
 
-await desktop.getByLabel("输入一个 AI 概念").fill("词元");
-await desktop.getByRole("button", { name: "搜索" }).click();
-await desktop.getByRole("heading", { name: "词元" }).waitFor();
-
-await desktop.getByLabel("输入一个 AI 概念").fill("skill");
-await desktop.getByRole("button", { name: "搜索" }).click();
-await desktop.getByRole("heading", { name: "智能体技能" }).waitFor();
+for (const [query, heading, type] of diagramChecks) {
+  await desktop.getByLabel("输入一个 AI 概念").fill(query);
+  await desktop.getByRole("button", { name: "搜索" }).click();
+  await desktop.getByRole("heading", { name: heading }).waitFor();
+  const diagram = desktop.locator(`.mechanism-${type}`);
+  await diagram.waitFor();
+  await desktop.mouse.move(0, 0);
+  const diagramBox = await diagram.boundingBox();
+  await desktop.screenshot({
+    path: fileURLToPath(new URL(`diagram-${query.toLowerCase().replaceAll(" ", "-")}.png`, outputDir)),
+    clip: diagramBox,
+  });
+}
 
 await desktop.getByLabel("输入一个 AI 概念").fill("harness");
 await desktop.getByRole("button", { name: "搜索" }).click();
@@ -47,10 +62,16 @@ if (directoryConcepts !== 169) throw new Error(`Expected 169 directory links, fo
 
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
 await mobile.goto(baseUrl, { waitUntil: "networkidle" });
-const overflow = await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
-if (overflow) throw new Error("Mobile layout has horizontal overflow");
+let overflow = false;
+for (const [query, heading] of diagramChecks.slice(0, 6)) {
+  await mobile.getByLabel("输入一个 AI 概念").fill(query);
+  await mobile.getByRole("button", { name: "搜索" }).click();
+  await mobile.getByRole("heading", { name: heading }).waitFor();
+  overflow ||= await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
+}
+if (overflow) throw new Error("A mobile diagram has horizontal overflow");
 await mobile.screenshot({ path: mobileShot, fullPage: true });
 
 await browser.close();
 
-console.log(JSON.stringify({ baseUrl, visiblePapers, directoryConcepts, mobileOverflow: overflow, consoleErrors }, null, 2));
+console.log(JSON.stringify({ baseUrl, diagramChecks: diagramChecks.length, visiblePapers, directoryConcepts, mobileOverflow: overflow, consoleErrors }, null, 2));
