@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowDown,
   ArrowsClockwise,
@@ -12,10 +12,12 @@ import {
   GithubLogo,
   Link as LinkIcon,
   MagnifyingGlass,
+  Plus,
   Robot,
   ShareNetwork,
   Sparkle,
   Wrench,
+  X,
 } from "@phosphor-icons/react";
 import { categoryDetails, glossaryEntries, papersByCategory } from "./glossary";
 import { buildDiagram, buildExistingDiagram, diagramTypeLabels } from "./diagrams";
@@ -444,7 +446,7 @@ const cases = [
   },
 ];
 
-const catalog = Object.entries(concepts)
+const baseCatalog = Object.entries(concepts)
   .map(([key, concept]) => ({
     key,
     label: concept.aliases[0],
@@ -461,9 +463,9 @@ function normalizeConceptTerm(value) {
     .replace(/\s+/g, " ");
 }
 
-function resolveConcept(input) {
+function resolveConcept(input, conceptSource = concepts) {
   const normalized = normalizeConceptTerm(input);
-  return Object.entries(concepts).find(([, concept]) =>
+  return Object.entries(conceptSource).find(([, concept]) =>
     concept.aliases.some((alias) => normalizeConceptTerm(alias) === normalized),
   )?.[0];
 }
@@ -497,6 +499,32 @@ const diagramIcons = {
   fast: ArrowRight,
   spark: Sparkle,
 };
+
+const sitesBackendOrigin = "https://ai-concept-atlas.leyangsh.chatgpt.site";
+
+function backendUrl(path) {
+  return window.location.hostname === "nicekidsg.github.io" ? `${sitesBackendOrigin}${path}` : path;
+}
+
+function hydrateCommunityConcept(rawConcept) {
+  return {
+    ...rawConcept,
+    aliases: rawConcept.aliases?.length ? rawConcept.aliases : [rawConcept.title],
+    points: (rawConcept.points ?? []).map(([title, body, role]) => [
+      title,
+      body,
+      diagramIcons[role] ?? Sparkle,
+    ]),
+    papers: rawConcept.papers ?? [],
+  };
+}
+
+async function requestJson(path, options) {
+  const response = await fetch(backendUrl(path), options);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "请求失败，请稍后再试。");
+  return payload;
+}
 
 function DiagramNode({ node, className = "" }) {
   const [label, caption, role] = node;
@@ -629,42 +657,132 @@ export function App() {
   const [paperYear, setPaperYear] = useState("all");
   const [saved, setSaved] = useState(false);
   const [notice, setNotice] = useState("");
-  const concept = concepts[activeKey];
+  const [missingTerm, setMissingTerm] = useState("");
+  const [communityConcepts, setCommunityConcepts] = useState({});
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [registrationStatus, setRegistrationStatus] = useState("idle");
+  const [registrationError, setRegistrationError] = useState("");
+  const [registration, setRegistration] = useState({ term: "", context: "", sourceUrl: "", website: "" });
+  const allConcepts = useMemo(() => ({ ...concepts, ...communityConcepts }), [communityConcepts]);
+  const catalog = useMemo(() => [
+    ...baseCatalog,
+    ...Object.entries(communityConcepts).map(([key, item]) => ({
+      key,
+      label: item.aliases[0],
+      title: item.title,
+      category: item.category ?? "社区新词",
+    })),
+  ].sort((a, b) => a.label.localeCompare(b.label, "en")), [communityConcepts]);
+  const concept = allConcepts[activeKey];
+  const conceptCases = concept.community ? [] : cases;
+
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get("concept");
+    if (!slug) return undefined;
+    if (concepts[slug]) {
+      setActiveKey(slug);
+      setQuery(concepts[slug].aliases[0]);
+      return undefined;
+    }
+
+    let cancelled = false;
+    requestJson(`/api/concepts/${encodeURIComponent(slug)}`)
+      .then(({ concept: rawConcept }) => {
+        if (cancelled) return;
+        const hydrated = hydrateCommunityConcept(rawConcept);
+        setCommunityConcepts((current) => ({ ...current, [hydrated.key]: hydrated }));
+        setActiveKey(hydrated.key);
+        setQuery(hydrated.aliases[0]);
+      })
+      .catch((error) => {
+        if (!cancelled) setNotice(error.message);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredPapers = useMemo(
     () => concept.papers.filter((paper) => paperYear === "all" || String(paper.year) === paperYear),
     [concept, paperYear],
   );
 
-  const runSearch = (event) => {
-    event?.preventDefault();
-    const found = resolveConcept(query);
-    if (!found) {
-      setNotice("暂未收录这个词，试试 agent、智能体、token、词元、skill 或 RAG。");
-      return;
-    }
-    setActiveKey(found);
-    setQuery(concepts[found].aliases[0]);
+  const setConceptUrl = (key) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("concept", key);
+    window.history.replaceState({}, "", url);
+  };
+
+  const showConcept = (key, shouldScroll = false) => {
+    setActiveKey(key);
+    setQuery(allConcepts[key].aliases[0]);
     setPaperYear("all");
     setNotice("");
+    setMissingTerm("");
+    setConceptUrl(key);
+    if (shouldScroll) window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const runSearch = (event) => {
+    event?.preventDefault();
+    const found = resolveConcept(query, allConcepts);
+    if (!found) {
+      const term = query.trim();
+      setMissingTerm(term);
+      setNotice(`“${term}”暂未收录。你可以登记它，后台会立即建立一份待核验的解释页。`);
+      return;
+    }
+    showConcept(found);
   };
 
   const chooseConcept = (label) => {
     setQuery(label);
-    const found = resolveConcept(label);
-    if (found) {
-      setActiveKey(found);
+    const found = resolveConcept(label, allConcepts);
+    if (found) showConcept(found, true);
+  };
+
+  const openRegistration = (seedTerm = "") => {
+    setRegistration((current) => ({ ...current, term: seedTerm || current.term || query }));
+    setRegistrationStatus("idle");
+    setRegistrationError("");
+    setRegistrationOpen(true);
+  };
+
+  const submitRegistration = async (event) => {
+    event.preventDefault();
+    setRegistrationStatus("submitting");
+    setRegistrationError("");
+    try {
+      const payload = await requestJson("/api/concepts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registration),
+      });
+      const hydrated = hydrateCommunityConcept(payload.concept);
+      setCommunityConcepts((current) => ({ ...current, [hydrated.key]: hydrated }));
+      setActiveKey(hydrated.key);
+      setQuery(hydrated.aliases[0]);
       setPaperYear("all");
-      setNotice("");
+      setMissingTerm("");
+      setConceptUrl(hydrated.key);
+      setNotice(payload.created ? "解释页已生成，并保存到社区词库。" : "这个词已经登记过，已打开现有解释页。");
+      setRegistrationStatus("success");
+      setRegistrationOpen(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      setRegistrationStatus("error");
+      setRegistrationError(error.message);
     }
   };
 
   const share = async () => {
-    const text = `概念回路：${concept.title} — ${concept.definition}`;
+    const url = new URL(window.location.href);
+    url.searchParams.set("concept", activeKey);
+    const text = `概念回路：${concept.title} — ${concept.definition}\n${url}`;
     try {
       await navigator.clipboard.writeText(text);
-      setNotice("概念摘要已复制，可以分享给同事了。");
+      setNotice("概念摘要和词条链接已复制，可以分享给同事了。");
+      setMissingTerm("");
     } catch {
       setNotice(text);
     }
@@ -681,6 +799,9 @@ export function App() {
         <nav aria-label="主导航">
           <a href="#search">探索</a>
           <a href="#related">主题</a>
+          <button className="register-nav" type="button" onClick={() => openRegistration()}>
+            <Plus size={17} weight="bold" /> 登记新词
+          </button>
           <button type="button" onClick={() => setSaved((value) => !value)}>{saved ? "已收藏" : "收藏"}</button>
           <a href="#about">关于</a>
         </nav>
@@ -706,13 +827,29 @@ export function App() {
             搜索 <ArrowRight size={22} weight="bold" />
           </button>
         </form>
-        {notice && <p className="notice" role="status">{notice}</p>}
+        {notice && (
+          <div className={`notice ${missingTerm ? "notice-action" : ""}`} role="status">
+            <p>{notice}</p>
+            {missingTerm && (
+              <button type="button" onClick={() => openRegistration(missingTerm)}>
+                <Plus size={17} weight="bold" /> 登记“{missingTerm}”
+              </button>
+            )}
+          </div>
+        )}
       </section>
 
       <section className="concept-grid" aria-live="polite">
         <article className="concept-copy">
           <div className="concept-meta">
-            <span>{concept.eyebrow}</span>
+            <div className="concept-labels">
+              <span>{concept.eyebrow}</span>
+              {concept.community && (
+                <small>
+                  社区登记 · {concept.community.generationMode === "ai" ? "AI 草稿" : "自动草稿"} · {concept.community.status}
+                </small>
+              )}
+            </div>
             <div className="concept-actions">
               <button type="button" onClick={() => setSaved((value) => !value)} aria-pressed={saved}>
                 <BookmarkSimple size={20} weight={saved ? "fill" : "regular"} /> {saved ? "已收藏" : "收藏"}
@@ -770,7 +907,11 @@ export function App() {
                 <p><strong>为什么值得读</strong>{paper.note}</p>
                 <EvidenceLink href={paper.url} label={`打开论文：${paper.title}`} />
               </article>
-            )) : <p className="empty-state">这个年份暂无收录论文。</p>}
+            )) : (
+              <p className="empty-state">
+                {concept.community ? "自动草稿不会编造论文；补充原始来源后，这里才会显示证据。" : "这个年份暂无收录论文。"}
+              </p>
+            )}
           </div>
         </div>
 
@@ -783,7 +924,7 @@ export function App() {
             <p>入选依据：GitHub Stars / 社区活跃度</p>
           </div>
           <div className="evidence-rows">
-            {cases.map((item) => (
+            {conceptCases.length > 0 ? conceptCases.map((item) => (
               <article className="case-row" key={item.name}>
                 <div className="case-name"><GithubLogo size={30} weight="fill" /><strong>{item.name}</strong></div>
                 <p>{item.use}</p>
@@ -793,7 +934,7 @@ export function App() {
                 </div>
                 <EvidenceLink href={item.url} label={`打开 GitHub 项目：${item.name}`} />
               </article>
-            ))}
+            )) : <p className="empty-state">社区草稿暂不自动匹配案例，避免把高星项目错误关联到新概念。</p>}
           </div>
           <p className="method-note">Stars 是公开关注度信号，不等于技术质量；入选同时参考项目定位、近期维护状态与社区采用度。</p>
         </div>
@@ -813,6 +954,75 @@ export function App() {
         </details>
         <p id="about">论文与案例均提供原始来源；热度数据为 2026-07-13 的公开快照。</p>
       </footer>
+
+      {registrationOpen && (
+        <div className="register-backdrop" role="presentation">
+          <section className="register-dialog" role="dialog" aria-modal="true" aria-labelledby="register-title">
+            <div className="register-heading">
+              <div>
+                <span>COMMUNITY INBOX</span>
+                <h2 id="register-title">登记一个没看懂的词</h2>
+                <p>提交后，后台会去重、生成简洁解释与专属图示，并保存成可分享页面。</p>
+              </div>
+              <button className="register-close" type="button" onClick={() => setRegistrationOpen(false)} aria-label="关闭登记窗口">
+                <X size={25} />
+              </button>
+            </div>
+
+            <form className="register-form" onSubmit={submitRegistration}>
+              <label>
+                <span>概念词 <strong>必填</strong></span>
+                <input
+                  autoFocus
+                  required
+                  minLength={2}
+                  maxLength={80}
+                  value={registration.term}
+                  onChange={(event) => setRegistration((current) => ({ ...current, term: event.target.value }))}
+                  placeholder="例如 inference-time scaling / 推理时扩展"
+                />
+              </label>
+              <label>
+                <span>你在哪里看到它？ <small>推荐填写</small></span>
+                <textarea
+                  maxLength={600}
+                  rows={4}
+                  value={registration.context}
+                  onChange={(event) => setRegistration((current) => ({ ...current, context: event.target.value }))}
+                  placeholder="贴一小段原句，或说明它出现在论文、产品还是讨论中。上下文越清楚，解释越准确。"
+                />
+              </label>
+              <label>
+                <span>原始链接 <small>可选</small></span>
+                <input
+                  type="url"
+                  maxLength={500}
+                  value={registration.sourceUrl}
+                  onChange={(event) => setRegistration((current) => ({ ...current, sourceUrl: event.target.value }))}
+                  placeholder="https://…"
+                />
+              </label>
+              <label className="form-honeypot" aria-hidden="true">
+                <span>Website</span>
+                <input
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={registration.website}
+                  onChange={(event) => setRegistration((current) => ({ ...current, website: event.target.value }))}
+                />
+              </label>
+              {registrationError && <p className="register-error" role="alert">{registrationError}</p>}
+              <div className="register-submit">
+                <p><CheckCircle size={19} /> 不自动编造论文或 GitHub 案例；没有可靠来源时会明确标注“待核验”。</p>
+                <button className="search-button" type="submit" disabled={registrationStatus === "submitting"}>
+                  {registrationStatus === "submitting" ? "正在生成…" : "生成解释页"}
+                  {registrationStatus !== "submitting" && <ArrowRight size={21} weight="bold" />}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
     </main>
   );
 }
