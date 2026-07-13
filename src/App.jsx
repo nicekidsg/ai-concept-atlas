@@ -17,6 +17,7 @@ import {
   Sparkle,
   Wrench,
 } from "@phosphor-icons/react";
+import { categoryDetails, glossaryEntries, papersByCategory } from "./glossary";
 
 const concepts = {
   loop: {
@@ -139,7 +140,279 @@ const concepts = {
       { year: 2024, title: "Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters", venue: "arXiv", note: "研究按题目难度自适应分配推理计算的收益。", url: "https://arxiv.org/abs/2408.03314" },
     ],
   },
+  skill: {
+    eyebrow: "AGENT SKILL",
+    title: "智能体技能",
+    aliases: ["skill", "skills", "agent skill", "agent skills", "智能体技能", "技能"],
+    definition: "可被智能体按需发现和加载的能力包，通常包含操作说明、脚本与参考资料，用来稳定完成一类重复任务。",
+    takeaway: "工具告诉智能体“能做什么”，Skill 则教它“什么时候、按什么步骤把这件事做好”。",
+    why: "它把一次性的提示经验沉淀成可复用、可组合、可版本化的能力，是智能体从演示走向生产的重要模块。",
+    points: [
+      ["说明", "定义触发条件、操作步骤与完成标准。", BookmarkSimple],
+      ["资源", "附带模板、示例与领域知识，减少临场猜测。", LinkIcon],
+      ["脚本", "把确定性步骤交给代码执行，提高一致性。", Wrench],
+    ],
+    steps: [
+      ["发现", "匹配任务", MagnifyingGlass],
+      ["加载", "读取说明", BookmarkSimple],
+      ["执行", "调用资源", Wrench],
+      ["验证", "检查结果", CheckCircle],
+    ],
+    papers: [
+      { year: 2026, title: "Agent Skills for Large Language Models: Architecture, Acquisition, Security, and the Path Forward", venue: "arXiv", note: "系统梳理技能的架构、获取方式、评测与安全问题。", url: "https://arxiv.org/abs/2602.12430" },
+      { year: 2026, title: "Towards Secure Agent Skills: Understanding and Mitigating Security Risks", venue: "arXiv", note: "聚焦技能包的供应链、权限与指令注入风险。", url: "https://arxiv.org/abs/2604.02837" },
+      { year: 2025, title: "Open Agent Skills Specification", venue: "开放标准", note: "给出以 SKILL.md 为核心的可移植技能包结构与字段约定。", url: "https://openagentskills.dev/docs/specification" },
+    ],
+  },
+  mcp: {
+    eyebrow: "MODEL CONTEXT PROTOCOL",
+    title: "模型上下文协议",
+    aliases: ["mcp", "model context protocol", "模型上下文协议", "上下文协议"],
+    definition: "连接 AI 应用与外部工具、数据和提示资源的开放协议，用统一接口替代为每个系统单独开发集成。",
+    takeaway: "MCP 像 AI 应用的 USB-C：用一套协议连接许多不同的数据源和工具。",
+    why: "标准化的发现、调用与返回格式能显著降低集成成本，但也要求认真处理身份、权限与不可信工具。",
+    points: [
+      ["客户端", "由 AI 应用发起连接并管理会话。", Robot],
+      ["服务端", "暴露工具、资源与提示能力。", Wrench],
+      ["契约", "用结构化协议描述能力和调用结果。", CheckCircle],
+    ],
+    steps: [
+      ["发现", "列出能力", MagnifyingGlass],
+      ["连接", "建立会话", LinkIcon],
+      ["调用", "发送参数", Wrench],
+      ["返回", "接收结果", ArrowRight],
+    ],
+    papers: [
+      { year: 2026, title: "SMCP: Secure Model Context Protocol", venue: "arXiv", note: "从身份、认证、策略与审计层面补强 MCP 的安全边界。", url: "https://arxiv.org/abs/2602.01129" },
+      { year: 2025, title: "A Survey of Agent Interoperability Protocols", venue: "arXiv", note: "比较 MCP、ACP、A2A 与 ANP 在工具接入和智能体协作中的定位。", url: "https://arxiv.org/abs/2505.02279" },
+      { year: 2024, title: "Model Context Protocol Specification", venue: "开放标准", note: "定义 MCP 的客户端—服务端架构、生命周期与核心消息格式。", url: "https://modelcontextprotocol.io/specification/2024-11-05/index" },
+    ],
+  },
+  subagent: {
+    eyebrow: "SUBAGENT",
+    title: "子智能体",
+    aliases: ["subagent", "sub-agent", "sub agent", "子智能体", "子代理"],
+    definition: "由主智能体为明确子任务启动的独立工作单元，拥有受限上下文、工具和交付目标，完成后把结果汇总回来。",
+    takeaway: "子智能体不是多开一个聊天窗口，而是把可并行的责任边界真正分出去。",
+    why: "它能隔离上下文、并行推进不同专长的工作，但任务拆分和结果合并本身也会产生协调成本。",
+    points: [
+      ["范围", "为每个子任务定义清晰的输入与完成标准。", CheckCircle],
+      ["隔离", "只提供必要上下文，减少相互干扰。", Circle],
+      ["汇总", "把证据与结论交回主智能体统一决策。", ShareNetwork],
+    ],
+    steps: [
+      ["拆分", "识别子任务", Brain],
+      ["委派", "分配上下文", ShareNetwork],
+      ["执行", "独立工作", Robot],
+      ["合并", "汇总结果", CheckCircle],
+    ],
+    papers: [
+      { year: 2023, title: "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation", venue: "arXiv", note: "展示多个可配置智能体如何通过对话共同完成任务。", url: "https://arxiv.org/abs/2308.08155" },
+      { year: 2023, title: "MetaGPT: Meta Programming for Multi-Agent Collaborative Framework", venue: "ICLR", note: "用角色、标准流程和结构化交付组织软件工程子任务。", url: "https://arxiv.org/abs/2308.00352" },
+      { year: 2023, title: "CAMEL: Communicative Agents for Mind Exploration of Large Scale Language Model Society", venue: "NeurIPS", note: "研究角色化智能体之间如何分工并持续协作。", url: "https://arxiv.org/abs/2303.17760" },
+    ],
+  },
+  "planner-executor": {
+    eyebrow: "PLANNER–EXECUTOR",
+    title: "规划—执行架构",
+    aliases: ["planner-executor", "planner executor", "planner", "规划执行", "规划—执行架构", "规划器"],
+    definition: "把“决定做什么”和“实际怎么做”分成两个角色：规划器拆解目标，执行器逐步调用工具，并根据结果重新规划。",
+    takeaway: "先把路线想清楚，再逐步执行；环境变了，就重画路线。",
+    why: "职责分离让长任务更容易检查和恢复，但过度规划也可能增加延迟，甚至在第一步就把错误放大。",
+    points: [
+      ["规划", "把目标拆成有顺序、可验证的步骤。", Brain],
+      ["执行", "按计划调用工具并记录实际结果。", Wrench],
+      ["重规划", "遇到失败或新信息时调整后续路径。", ArrowsClockwise],
+    ],
+    steps: [
+      ["目标", "理解约束", Eye],
+      ["计划", "拆分步骤", Brain],
+      ["执行", "调用工具", Wrench],
+      ["修订", "更新计划", ArrowsClockwise],
+    ],
+    papers: [
+      { year: 2023, title: "Plan-and-Solve Prompting: Improving Zero-Shot Chain-of-Thought Reasoning", venue: "ACL", note: "明确提出先生成计划、再按计划完成子任务的两阶段方法。", url: "https://arxiv.org/abs/2305.04091" },
+      { year: 2023, title: "Language Agent Tree Search Unifies Reasoning, Acting, and Planning", venue: "arXiv", note: "用搜索把规划、行动和环境反馈合并到同一过程。", url: "https://arxiv.org/abs/2310.04406" },
+      { year: 2023, title: "ReAct: Synergizing Reasoning and Acting in Language Models", venue: "ICLR", note: "提供推理与行动交替进行的基础执行范式。", url: "https://arxiv.org/abs/2210.03629" },
+    ],
+  },
+  guardrail: {
+    eyebrow: "GUARDRAIL",
+    title: "智能体护栏",
+    aliases: ["guardrail", "guardrails", "rail", "护栏", "安全护栏", "智能体护栏"],
+    definition: "在模型输入、工具调用和输出周围设置的运行时检查与策略，用来阻止越权、危险或不符合业务规则的行为。",
+    takeaway: "护栏不是让模型永不犯错，而是在关键边界发现、拦截并升级风险。",
+    why: "智能体能对外部系统采取行动，风险不再只是“说错话”，还包括错误调用、数据泄露和不可逆操作。",
+    points: [
+      ["输入", "识别注入、敏感数据与不合规请求。", Eye],
+      ["行动", "用权限和策略限制工具调用范围。", Wrench],
+      ["输出", "检查结果并在高风险时要求人工确认。", CheckCircle],
+    ],
+    steps: [
+      ["识别", "判断风险", Eye],
+      ["决策", "匹配策略", Brain],
+      ["拦截", "限制行动", CheckCircle],
+      ["升级", "交给人工", ShareNetwork],
+    ],
+    papers: [
+      { year: 2024, title: "ShieldGemma: Generative AI Content Moderation Based on Gemma", venue: "arXiv", note: "展示面向输入与输出安全分类的开放权重审核模型。", url: "https://arxiv.org/abs/2407.21772" },
+      { year: 2023, title: "NeMo Guardrails: A Toolkit for Controllable and Safe LLM Applications", venue: "EMNLP", note: "用可编程 rails 控制对话路径、主题和输出行为。", url: "https://arxiv.org/abs/2310.10501" },
+      { year: 2022, title: "Constitutional AI: Harmlessness from AI Feedback", venue: "Anthropic", note: "用显式原则与自我批评塑造安全行为，是策略型护栏的重要基础。", url: "https://arxiv.org/abs/2212.08073" },
+    ],
+  },
+  memory: {
+    eyebrow: "AGENT MEMORY",
+    title: "智能体记忆",
+    aliases: ["memory", "agent memory", "long-term memory", "智能体记忆", "长期记忆", "记忆"],
+    definition: "让智能体在当前上下文之外保存、检索和更新信息的机制，既可记录事实，也可沉淀经验与任务状态。",
+    takeaway: "上下文是眼前的工作台，记忆是需要时能找回来的档案库。",
+    why: "它支持跨会话连续性和长期任务，但记错、找错或保留过久，也会带来隐私与错误累积问题。",
+    points: [
+      ["写入", "判断哪些事实、事件或经验值得保存。", BookmarkSimple],
+      ["检索", "根据当前任务召回最相关的信息。", MagnifyingGlass],
+      ["更新", "合并新证据，淡化过期或冲突内容。", ArrowsClockwise],
+    ],
+    steps: [
+      ["经历", "产生信息", Eye],
+      ["存储", "形成记忆", BookmarkSimple],
+      ["召回", "匹配任务", MagnifyingGlass],
+      ["反思", "更新经验", Brain],
+    ],
+    papers: [
+      { year: 2023, title: "MemGPT: Towards LLMs as Operating Systems", venue: "arXiv", note: "用分层记忆和显式换页管理有限上下文。", url: "https://arxiv.org/abs/2310.08560" },
+      { year: 2023, title: "Generative Agents: Interactive Simulacra of Human Behavior", venue: "UIST", note: "把事件流、检索、反思和计划组合成长期行为记忆。", url: "https://arxiv.org/abs/2304.03442" },
+      { year: 2023, title: "MemoryBank: Enhancing Large Language Models with Long-Term Memory", venue: "AAAI", note: "探索跨对话保存、遗忘和召回用户相关记忆。", url: "https://arxiv.org/abs/2305.10250" },
+    ],
+  },
+  "tool-use": {
+    eyebrow: "TOOL USE",
+    title: "工具调用",
+    aliases: ["tool use", "tool-use", "tool calling", "function calling", "工具调用", "函数调用"],
+    definition: "模型根据任务选择外部能力，生成符合接口约束的参数，并把返回结果纳入后续推理的过程。",
+    takeaway: "模型负责判断与组织，工具负责搜索、计算或真正改变外部世界。",
+    why: "工具把语言模型的能力延伸到实时信息和确定性操作，同时也引入接口错误、权限与结果可信度问题。",
+    points: [
+      ["选择", "从可用工具中判断哪个最适合当前步骤。", Brain],
+      ["参数", "按照结构化定义生成合法调用。", Wrench],
+      ["吸收", "理解返回结果并决定下一步。", ArrowsClockwise],
+    ],
+    steps: [
+      ["意图", "识别需求", Eye],
+      ["选择", "匹配工具", Brain],
+      ["调用", "传入参数", Wrench],
+      ["整合", "使用结果", CheckCircle],
+    ],
+    papers: [
+      { year: 2023, title: "ToolLLM: Facilitating Large Language Models to Master 16000+ Real-world APIs", venue: "ICLR", note: "围绕大规模真实 API 构建工具学习数据与评测。", url: "https://arxiv.org/abs/2307.16789" },
+      { year: 2023, title: "Gorilla: Large Language Model Connected with Massive APIs", venue: "arXiv", note: "研究模型如何准确选择 API，并降低工具调用幻觉。", url: "https://arxiv.org/abs/2305.15334" },
+      { year: 2023, title: "Toolformer: Language Models Can Teach Themselves to Use Tools", venue: "NeurIPS", note: "让模型自监督学习何时调用工具、传什么参数以及如何使用结果。", url: "https://arxiv.org/abs/2302.04761" },
+    ],
+  },
+  "multi-agent": {
+    eyebrow: "MULTI-AGENT",
+    title: "多智能体系统",
+    aliases: ["multi-agent", "multi agent", "multi-agent system", "mas", "多智能体", "多智能体系统"],
+    definition: "让多个拥有不同角色、上下文或工具的智能体通过通信、分工与协商共同完成任务的系统。",
+    takeaway: "多个智能体的价值不在数量，而在是否有互补角色和清晰的协作协议。",
+    why: "它适合并行探索、交叉检查和专长分工，但也可能带来重复劳动、意见循环和更高成本。",
+    points: [
+      ["角色", "为每个智能体分配互补的职责与权限。", Robot],
+      ["通信", "用结构化消息共享必要信息和证据。", ShareNetwork],
+      ["协调", "处理依赖、冲突和最终结果归属。", CheckCircle],
+    ],
+    steps: [
+      ["分工", "分配角色", ShareNetwork],
+      ["协作", "交换信息", ArrowsClockwise],
+      ["复核", "发现冲突", Eye],
+      ["汇总", "形成结论", CheckCircle],
+    ],
+    papers: [
+      { year: 2023, title: "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation", venue: "arXiv", note: "提供可配置、可组合的多智能体对话框架。", url: "https://arxiv.org/abs/2308.08155" },
+      { year: 2023, title: "MetaGPT: Meta Programming for Multi-Agent Collaborative Framework", venue: "ICLR", note: "把软件公司的角色与标准流程映射为多智能体协作。", url: "https://arxiv.org/abs/2308.00352" },
+      { year: 2023, title: "CAMEL: Communicative Agents for Mind Exploration of Large Scale Language Model Society", venue: "NeurIPS", note: "研究基于角色扮演的智能体社会与协作方式。", url: "https://arxiv.org/abs/2303.17760" },
+    ],
+  },
+  "computer-use": {
+    eyebrow: "COMPUTER USE",
+    title: "计算机操作智能体",
+    aliases: ["computer use", "computer-use", "computer use agent", "gui agent", "计算机操作", "计算机操作智能体", "电脑智能体"],
+    definition: "通过截图或界面结构理解桌面与网页，并像人一样点击、输入、滚动和跨应用完成任务的智能体。",
+    takeaway: "API 直连像走员工通道，Computer Use 则让智能体从所有人都能看到的界面进入。",
+    why: "它能覆盖没有 API 的旧系统和长尾软件，但界面变化、视觉误判和高风险点击会显著影响可靠性。",
+    points: [
+      ["感知", "读取截图、文字与当前交互状态。", Eye],
+      ["定位", "找到正确控件并判断可执行动作。", MagnifyingGlass],
+      ["操作", "点击、输入、滚动并观察界面变化。", Wrench],
+    ],
+    steps: [
+      ["截图", "观察界面", Eye],
+      ["定位", "识别控件", MagnifyingGlass],
+      ["操作", "鼠标键盘", Wrench],
+      ["确认", "检查变化", CheckCircle],
+    ],
+    papers: [
+      { year: 2024, title: "Agent S: An Open Agentic Framework that Uses Computers Like a Human", venue: "arXiv", note: "结合经验检索和分层规划完成复杂桌面任务。", url: "https://arxiv.org/abs/2410.08164" },
+      { year: 2024, title: "OSWorld: Benchmarking Multimodal Agents for Open-Ended Tasks in Real Computer Environments", venue: "NeurIPS", note: "在真实操作系统和应用中评测通用计算机操作能力。", url: "https://arxiv.org/abs/2404.07972" },
+      { year: 2023, title: "WebArena: A Realistic Web Environment for Building Autonomous Agents", venue: "ICLR", note: "提供可复现的真实网站环境与长链网页任务。", url: "https://arxiv.org/abs/2307.13854" },
+    ],
+  },
+  "context-engineering": {
+    eyebrow: "CONTEXT ENGINEERING",
+    title: "上下文工程",
+    aliases: ["context engineering", "context-engineering", "上下文工程", "上下文设计"],
+    definition: "系统设计模型每一步能看到的信息：选择哪些指令、记忆、检索结果、工具反馈和示例，并控制它们的顺序与篇幅。",
+    takeaway: "Prompt 是一段指令；Context Engineering 管的是模型作答前看到的整张工作台。",
+    why: "上下文窗口再长也不等于信息都会被正确使用，相关性、位置、噪声和更新时机同样决定结果质量。",
+    points: [
+      ["选择", "只保留对当前决策真正有用的信息。", MagnifyingGlass],
+      ["组织", "把指令、证据和历史放在清晰位置。", BookmarkSimple],
+      ["更新", "随着任务推进压缩、替换或补充上下文。", ArrowsClockwise],
+    ],
+    steps: [
+      ["收集", "获取信息", LinkIcon],
+      ["筛选", "判断相关", MagnifyingGlass],
+      ["编排", "组织上下文", Brain],
+      ["刷新", "保持有效", ArrowsClockwise],
+    ],
+    papers: [
+      { year: 2023, title: "LongBench: A Bilingual, Multitask Benchmark for Long Context Understanding", venue: "ACL", note: "从多类任务评测长上下文理解，而不只看窗口长度。", url: "https://arxiv.org/abs/2308.14508" },
+      { year: 2023, title: "Lost in the Middle: How Language Models Use Long Contexts", venue: "TACL", note: "揭示关键信息所处位置会显著影响模型使用效果。", url: "https://arxiv.org/abs/2307.03172" },
+      { year: 2020, title: "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", venue: "NeurIPS", note: "奠定按需检索外部知识并注入生成上下文的经典范式。", url: "https://arxiv.org/abs/2005.11401" },
+    ],
+  },
 };
+
+const flowIcons = [Eye, Brain, Wrench, CheckCircle];
+
+Object.assign(
+  concepts,
+  Object.fromEntries(
+    glossaryEntries.map((entry) => {
+      const category = categoryDetails[entry.category];
+      return [entry.key, {
+        eyebrow: `${category.label} · ${entry.term.toUpperCase()}`,
+        title: entry.title,
+        category: category.label,
+        aliases: [...new Set([
+          entry.term,
+          entry.key.replaceAll("-", " "),
+          entry.title,
+          ...entry.aliases,
+        ])],
+        definition: entry.definition,
+        takeaway: entry.takeaway,
+        why: category.why,
+        points: [
+          ["是什么", entry.definition, Eye],
+          ["用在哪里", entry.use, Wrench],
+          ["一眼记住", entry.takeaway, Sparkle],
+        ],
+        steps: category.steps.map(([label, caption], index) => [label, caption, flowIcons[index]]),
+        papers: papersByCategory[entry.category],
+      }];
+    }),
+  ),
+);
 
 const cases = [
   {
@@ -165,12 +438,27 @@ const cases = [
   },
 ];
 
-const suggestions = ["Harness", "Scaffolding", "Verifier", "Test-time compute"];
+const catalog = Object.entries(concepts)
+  .map(([key, concept]) => ({
+    key,
+    label: concept.aliases[0],
+    title: concept.title,
+    category: concept.category ?? "智能体核心",
+  }))
+  .sort((a, b) => a.label.localeCompare(b.label, "en"));
+
+function normalizeConceptTerm(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[–—_]/g, " ")
+    .replace(/\s+/g, " ");
+}
 
 function resolveConcept(input) {
-  const normalized = input.trim().toLowerCase();
+  const normalized = normalizeConceptTerm(input);
   return Object.entries(concepts).find(([, concept]) =>
-    concept.aliases.some((alias) => alias.toLowerCase() === normalized),
+    concept.aliases.some((alias) => normalizeConceptTerm(alias) === normalized),
   )?.[0];
 }
 
@@ -199,7 +487,7 @@ export function App() {
     event?.preventDefault();
     const found = resolveConcept(query);
     if (!found) {
-      setNotice("暂未收录这个词，试试 loop、harness、scaffolding、verifier 或 test-time compute。");
+      setNotice("暂未收录这个词，试试 agent、智能体、token、词元、skill 或 RAG。");
       return;
     }
     setActiveKey(found);
@@ -252,8 +540,15 @@ export function App() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             aria-label="输入一个 AI 概念"
-            placeholder="输入一个 AI 概念，例如 loop、harness…"
+            placeholder="输入中英文 AI 概念，例如 agent、智能体、token…"
+            list="concept-options"
           />
+          <datalist id="concept-options">
+            {catalog.flatMap((item) => [
+              <option key={`${item.key}-en`} value={item.label}>{item.title}</option>,
+              <option key={`${item.key}-zh`} value={item.title}>{item.label}</option>,
+            ])}
+          </datalist>
           <button className="search-button" type="submit">
             搜索 <ArrowRight size={22} weight="bold" />
           </button>
@@ -317,8 +612,8 @@ export function App() {
         <div className="papers">
           <div className="section-heading">
             <div>
-              <span className="section-kicker">PAPERS</span>
-              <h2>近期论文</h2>
+              <span className="section-kicker">PAPERS & SPECS</span>
+              <h2>论文与标准</h2>
             </div>
             <label>
               <span>按年份</span>
@@ -371,14 +666,17 @@ export function App() {
       </section>
 
       <footer id="related" className="related">
-        <span>相关概念</span>
-        <div>
-          {suggestions.filter((item) => item.toLowerCase() !== concept.aliases[0]).map((item) => (
-            <button type="button" key={item} onClick={() => chooseConcept(item)}>
-              <LinkIcon size={20} /> {item}
-            </button>
-          ))}
-        </div>
+        <span>概念词库 · {catalog.length}</span>
+        <details className="concept-directory">
+          <summary>浏览全部中英文概念</summary>
+          <div className="directory-list">
+            {catalog.filter((item) => item.key !== activeKey).map((item) => (
+              <button type="button" key={item.key} onClick={() => chooseConcept(item.label)}>
+                <LinkIcon size={18} /> {item.label}<small>{item.title}</small>
+              </button>
+            ))}
+          </div>
+        </details>
         <p id="about">论文与案例均提供原始来源；热度数据为 2026-07-13 的公开快照。</p>
       </footer>
     </main>

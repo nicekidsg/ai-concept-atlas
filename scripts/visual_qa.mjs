@@ -2,7 +2,7 @@ import { chromium } from "/Users/lyxu/.cache/codex-runtimes/codex-primary-runtim
 import { mkdir } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 
-const baseUrl = process.env.QA_URL ?? "http://172.31.41.27:4173/";
+const baseUrl = process.env.QA_URL ?? "http://127.0.0.1:4173/";
 const outputDir = new URL("../qa/", import.meta.url);
 const desktopShot = fileURLToPath(new URL("implementation-desktop.png", outputDir));
 const mobileShot = fileURLToPath(new URL("implementation-mobile.png", outputDir));
@@ -22,12 +22,28 @@ desktop.on("console", (message) => {
 await desktop.goto(baseUrl, { waitUntil: "networkidle" });
 await desktop.screenshot({ path: desktopShot, fullPage: true });
 
+await desktop.getByLabel("输入一个 AI 概念").fill("agent");
+await desktop.getByRole("button", { name: "搜索" }).click();
+await desktop.getByRole("heading", { name: "智能体" }).waitFor();
+
+await desktop.getByLabel("输入一个 AI 概念").fill("词元");
+await desktop.getByRole("button", { name: "搜索" }).click();
+await desktop.getByRole("heading", { name: "词元" }).waitFor();
+
+await desktop.getByLabel("输入一个 AI 概念").fill("skill");
+await desktop.getByRole("button", { name: "搜索" }).click();
+await desktop.getByRole("heading", { name: "智能体技能" }).waitFor();
+
 await desktop.getByLabel("输入一个 AI 概念").fill("harness");
 await desktop.getByRole("button", { name: "搜索" }).click();
 await desktop.getByRole("heading", { name: "智能体运行框架" }).waitFor();
 await desktop.getByRole("combobox", { name: "按年份" }).selectOption("2024");
 const visiblePapers = await desktop.locator(".paper-row").count();
 if (visiblePapers !== 2) throw new Error(`Expected 2 filtered papers, found ${visiblePapers}`);
+
+await desktop.getByText("浏览全部中英文概念").click();
+const directoryConcepts = await desktop.locator(".directory-list button").count();
+if (directoryConcepts !== 169) throw new Error(`Expected 169 directory links, found ${directoryConcepts}`);
 
 const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });
 await mobile.goto(baseUrl, { waitUntil: "networkidle" });
@@ -37,4 +53,4 @@ await mobile.screenshot({ path: mobileShot, fullPage: true });
 
 await browser.close();
 
-console.log(JSON.stringify({ baseUrl, visiblePapers, mobileOverflow: overflow, consoleErrors }, null, 2));
+console.log(JSON.stringify({ baseUrl, visiblePapers, directoryConcepts, mobileOverflow: overflow, consoleErrors }, null, 2));

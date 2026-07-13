@@ -561,20 +561,38 @@ button {
   min-height: 66px;
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
+  align-items: start;
   gap: 24px;
-  padding: 12px 18px;
+  padding: 18px;
 }
 
 .related > span {
+  padding-top: 8px;
   font-family: var(--serif);
   font-weight: 800;
 }
 
-.related > div {
+.concept-directory {
+  min-width: 0;
+}
+
+.concept-directory summary {
+  width: fit-content;
+  border-bottom: 1px solid var(--ink);
+  padding: 8px 2px 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.directory-list {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+  max-height: 360px;
+  margin-top: 16px;
+  padding-right: 8px;
+  overflow-y: auto;
 }
 
 .related button {
@@ -595,9 +613,18 @@ button {
   color: #fff;
 }
 
+.related button small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.related button:hover small {
+  color: rgba(255, 255, 255, 0.75);
+}
+
 .related > p {
   max-width: 300px;
-  margin: 0;
+  margin: 8px 0 0;
   color: var(--muted);
   text-align: right;
   font-size: 10px;

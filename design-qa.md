@@ -1,12 +1,12 @@
 # Design QA
 
 - Source visual truth: `/Users/lyxu/.codex/generated_images/019f597d-3447-7450-b6bd-d8e8733fd2f8/exec-e370072e-cb2f-46fa-90c2-584f138044c7.png`
-- Implementation: `http://172.31.41.27:4173/` (local preview)
+- Implementation: `http://127.0.0.1:4173/` (local preview)
 - Implementation screenshot: `/Users/lyxu/Documents/New project/ai-concept-atlas/qa/implementation-desktop.png`
 - Mobile screenshot: `/Users/lyxu/Documents/New project/ai-concept-atlas/qa/implementation-mobile.png`
 - Side-by-side comparison: `/Users/lyxu/Documents/New project/ai-concept-atlas/qa/comparison-desktop-final.jpg`
 - Intended viewport: 1440 x 1024
-- State: Agent Loop default result, with papers and open-source cases visible below
+- State: Agent Loop default result, 170-concept bilingual catalog, with papers and open-source cases visible below
 
 ## Full-view comparison evidence
 
@@ -22,8 +22,11 @@ Desktop and 390 px mobile screenshots were opened directly. The focused evidence
 
 - Production build completed successfully.
 - Search for `harness` switched the result to `智能体运行框架`.
+- Search for `agent` switched the result to `智能体`.
+- Chinese search for `词元` switched the result to `词元`.
+- Search for `skill` switched the result to `智能体技能`.
 - The 2024 paper filter reduced the Harness paper list to two matching papers.
-- The related-concept `Scaffolding` control switched the result to `能力脚手架`.
+- The expandable directory exposed 169 alternate links plus the active result, confirming all 170 concepts are present.
 - No console errors appeared in the final Playwright pass.
 - All paper and project rows expose direct external links in the rendered DOM.
 - The 390 x 844 responsive test reported no horizontal overflow.
@@ -48,6 +51,8 @@ No actionable P0/P1/P2 differences remain. Typography, spacing, colors, icon fam
 
 - [x] Match the warm paper, black type, and electric-blue direction.
 - [x] Preserve the large top search interaction.
+- [x] Support English terms, Chinese equivalents, common aliases, and search suggestions across 170 concepts.
+- [x] Keep the full catalog discoverable in a collapsed directory without crowding the main screen.
 - [x] Add concise concept copy and mechanism flow.
 - [x] Add direct paper links and year filtering.
 - [x] Add case popularity signals, timestamps, statuses, and source links.
