@@ -13,3 +13,5 @@ When implementing from a selected generated mock, treat that image as the source
 - Explain each concept with one concise definition, three key ideas, a visual mechanism, and why it matters.
 - The lower evidence area must include direct paper links and strong open-source cases.
 - Case popularity must show a traceable signal such as GitHub Stars, an update date, and a note that popularity is not a quality score.
+- Every static concept must show its own traceable origin or formation source plus an authoritative definition source; never invent a single origin for terms that evolved gradually.
+- Lead with a natural-language takeaway, then vary the explanation structure to fit the concept (for example history, mechanism, contrast, metric, risk, system, task, or data) instead of repeating one template.

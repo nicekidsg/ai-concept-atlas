@@ -19,8 +19,15 @@ import {
   Wrench,
   X,
 } from "@phosphor-icons/react";
-import { categoryDetails, glossaryEntries, glossarySources, papersByCategory } from "./glossary";
+import { categoryDetails, glossaryEntries, glossarySources } from "./glossary";
 import { buildDiagram, buildExistingDiagram, diagramTypeLabels } from "./diagrams";
+import {
+  buildExplanationPoints,
+  buildWhyItMatters,
+  getConceptResearch,
+  researchPapers,
+  sourceCatalogSize,
+} from "./conceptResearch";
 
 const concepts = {
   loop: {
@@ -387,8 +394,22 @@ const concepts = {
 
 const flowIcons = [Eye, Brain, Wrench, CheckCircle];
 
+const explanationIcons = {
+  history: [Eye, LinkIcon, Circle],
+  mechanism: [Brain, Wrench, Sparkle],
+  contrast: [Circle, Eye, ArrowsClockwise],
+  metric: [Eye, CheckCircle, Circle],
+  risk: [Eye, Circle, CheckCircle],
+  system: [ShareNetwork, Wrench, CheckCircle],
+  task: [Eye, Wrench, CheckCircle],
+  data: [BookmarkSimple, ArrowsClockwise, Circle],
+};
+
 Object.entries(concepts).forEach(([key, concept]) => {
+  const research = getConceptResearch(key);
   concept.diagram = buildExistingDiagram(key, concept);
+  concept.research = research;
+  concept.papers = researchPapers(research);
 });
 
 Object.assign(
@@ -396,6 +417,8 @@ Object.assign(
   Object.fromEntries(
     glossaryEntries.map((entry) => {
       const category = categoryDetails[entry.category];
+      const research = getConceptResearch(entry.key, entry.category);
+      const icons = explanationIcons[research.mode] ?? explanationIcons.mechanism;
       return [entry.key, {
         eyebrow: `${category.label} · ${entry.term.toUpperCase()}`,
         title: entry.title,
@@ -407,16 +430,14 @@ Object.assign(
           ...entry.aliases,
         ])],
         definition: entry.definition,
+        plainDefinition: entry.takeaway,
         takeaway: entry.takeaway,
-        why: category.why,
-        points: [
-          ["是什么", entry.definition, Eye],
-          ["用在哪里", entry.use, Wrench],
-          ["一眼记住", entry.takeaway, Sparkle],
-        ],
+        why: buildWhyItMatters(entry, research),
+        points: buildExplanationPoints(entry, research).map(([title, body], index) => [title, body, icons[index]]),
         steps: category.steps.map(([label, caption], index) => [label, caption, flowIcons[index]]),
         diagram: buildDiagram(entry.key, entry),
-        papers: papersByCategory[entry.category],
+        research,
+        papers: researchPapers(research),
       }];
     }),
   ),
@@ -445,6 +466,8 @@ const cases = [
     status: "持续活跃",
   },
 ];
+
+const researchSourceCount = sourceCatalogSize();
 
 const baseCatalog = Object.entries(concepts)
   .map(([key, concept]) => ({
@@ -507,6 +530,7 @@ function backendUrl(path) {
 }
 
 function hydrateCommunityConcept(rawConcept) {
+  const research = getConceptResearch(rawConcept.key, "foundation");
   return {
     ...rawConcept,
     aliases: rawConcept.aliases?.length ? rawConcept.aliases : [rawConcept.title],
@@ -515,7 +539,8 @@ function hydrateCommunityConcept(rawConcept) {
       body,
       diagramIcons[role] ?? Sparkle,
     ]),
-    papers: rawConcept.papers ?? [],
+    research,
+    papers: researchPapers(research),
   };
 }
 
@@ -654,7 +679,6 @@ function ConceptDiagram({ concept }) {
 export function App() {
   const [activeKey, setActiveKey] = useState("loop");
   const [query, setQuery] = useState("loop");
-  const [paperYear, setPaperYear] = useState("all");
   const [saved, setSaved] = useState(false);
   const [notice, setNotice] = useState("");
   const [missingTerm, setMissingTerm] = useState("");
@@ -702,10 +726,6 @@ export function App() {
     };
   }, []);
 
-  const filteredPapers = useMemo(
-    () => concept.papers.filter((paper) => paperYear === "all" || String(paper.year) === paperYear),
-    [concept, paperYear],
-  );
 
   const setConceptUrl = (key) => {
     const url = new URL(window.location.href);
@@ -716,7 +736,6 @@ export function App() {
   const showConcept = (key, shouldScroll = false) => {
     setActiveKey(key);
     setQuery(allConcepts[key].aliases[0]);
-    setPaperYear("all");
     setNotice("");
     setMissingTerm("");
     setConceptUrl(key);
@@ -762,7 +781,6 @@ export function App() {
       setCommunityConcepts((current) => ({ ...current, [hydrated.key]: hydrated }));
       setActiveKey(hydrated.key);
       setQuery(hydrated.aliases[0]);
-      setPaperYear("all");
       setMissingTerm("");
       setConceptUrl(hydrated.key);
       setNotice(payload.created ? "解释页已生成，并保存到社区词库。" : "这个词已经登记过，已打开现有解释页。");
@@ -844,6 +862,9 @@ export function App() {
           <div className="concept-meta">
             <div className="concept-labels">
               <span>{concept.eyebrow}</span>
+              {concept.research?.verified && (
+                <small className="verified-source"><CheckCircle size={13} weight="fill" /> 来源已核验</small>
+              )}
               {concept.community && (
                 <small>
                   社区登记 · {concept.community.generationMode === "ai" ? "AI 草稿" : "自动草稿"} · {concept.community.status}
@@ -858,7 +879,16 @@ export function App() {
             </div>
           </div>
           <h1>{concept.title}</h1>
-          <p className="definition">{concept.definition}</p>
+          <p className={`definition ${concept.plainDefinition ? "plain-definition" : ""}`}>
+            {concept.plainDefinition && <small>先说人话</small>}
+            {concept.plainDefinition ?? concept.definition}
+          </p>
+          <div className="source-context">
+            <span>{concept.research.originLabel}</span>
+            <strong>{concept.research.origin.author} · {concept.research.origin.year}</strong>
+            <span>权威释义</span>
+            <strong>{concept.research.authority.author}</strong>
+          </div>
 
           <div className="point-list">
             {concept.points.map(([title, body, Icon]) => (
@@ -883,29 +913,26 @@ export function App() {
         <div className="papers">
           <div className="section-heading">
             <div>
-              <span className="section-kicker">PAPERS & SPECS</span>
-              <h2>论文与标准</h2>
+              <span className="section-kicker">ORIGIN & AUTHORITY</span>
+              <h2>出处与权威定义</h2>
             </div>
-            <label>
-              <span>按年份</span>
-              <select value={paperYear} onChange={(event) => setPaperYear(event.target.value)}>
-                <option value="all">全部</option>
-                {[...new Set(concept.papers.map((paper) => paper.year))].map((year) => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </label>
+            <p>每个词独立溯源；无法确认单一首发时明确标注形成脉络。</p>
           </div>
           <div className="evidence-rows">
-            {filteredPapers.length > 0 ? filteredPapers.map((paper, index) => (
-              <article className="paper-row" key={paper.url}>
+            {concept.papers.length > 0 ? concept.papers.map((paper, index) => (
+              <article className="paper-row" key={`${paper.role}-${paper.title}`}>
                 <span className="row-number">{String(index + 1).padStart(2, "0")}</span>
                 <div>
-                  <a href={paper.url} target="_blank" rel="noreferrer">{paper.title}</a>
-                  <span className="paper-meta">{paper.venue} · {paper.year}</span>
+                  <span className="source-role">{paper.role}</span>
+                  {paper.url ? (
+                    <a href={paper.url} target="_blank" rel="noreferrer">{paper.title}</a>
+                  ) : (
+                    <strong className="pending-source-title">{paper.title}</strong>
+                  )}
+                  <span className="paper-meta">{paper.venue} · {paper.year} · {paper.kind}</span>
                 </div>
-                <p><strong>为什么值得读</strong>{paper.note}</p>
-                <EvidenceLink href={paper.url} label={`打开论文：${paper.title}`} />
+                <p><strong>为什么采用这个来源</strong>{paper.note}</p>
+                {paper.url && <EvidenceLink href={paper.url} label={`打开来源：${paper.title}`} />}
               </article>
             )) : (
               <p className="empty-state">
@@ -913,6 +940,9 @@ export function App() {
               </p>
             )}
           </div>
+          <p className="method-note research-method">
+            溯源规则：能确认首发论文或规范的，标“最早/原始来源”；术语由多人逐步形成的，标“术语形成脉络”，不虚构单一发明者。
+          </p>
         </div>
 
         <div className="cases">
@@ -941,7 +971,7 @@ export function App() {
       </section>
 
       <footer id="related" className="related">
-        <span>概念词库 · {catalog.length}</span>
+        <span>概念词库 · {catalog.length}<small>权威来源库 · {researchSourceCount}</small></span>
         <details className="concept-directory">
           <summary>浏览全部中英文概念</summary>
           <div className="directory-list">
@@ -953,8 +983,8 @@ export function App() {
           </div>
         </details>
         <p id="about">论文与案例均提供原始来源；热度数据为 2026-07-13 的公开快照。</p>
-        <div className="glossary-sources" aria-label="词库参考来源">
-          <span>词库参考</span>
+        <div className="glossary-sources" aria-label="扩词参考来源">
+          <span>扩词参考</span>
           {glossarySources.map((source) => (
             <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
               {source.label}<ArrowSquareOut size={13} />

@@ -52,9 +52,12 @@ for (const [query, heading, type] of diagramChecks) {
 await desktop.getByLabel("输入一个 AI 概念").fill("harness");
 await desktop.getByRole("button", { name: "搜索" }).click();
 await desktop.getByRole("heading", { name: "智能体运行框架" }).waitFor();
-await desktop.getByRole("combobox", { name: "按年份" }).selectOption("2024");
 const visiblePapers = await desktop.locator(".paper-row").count();
 if (visiblePapers !== 2) throw new Error(`Expected 2 filtered papers, found ${visiblePapers}`);
+const sourceRoles = await desktop.locator(".source-role").allTextContents();
+if (!sourceRoles.includes("术语形成脉络") || !sourceRoles.includes("权威定义依据")) {
+  throw new Error(`Expected origin and authority roles, found ${sourceRoles.join(", ")}`);
+}
 
 await desktop.getByText("浏览全部中英文概念").click();
 const directoryConcepts = await desktop.locator(".directory-list button").count();
@@ -77,4 +80,4 @@ await mobile.screenshot({ path: mobileShot, fullPage: true });
 
 await browser.close();
 
-console.log(JSON.stringify({ baseUrl, diagramChecks: diagramChecks.length, visiblePapers, directoryConcepts, glossarySourceLinks, mobileOverflow: overflow, consoleErrors }, null, 2));
+console.log(JSON.stringify({ baseUrl, diagramChecks: diagramChecks.length, visiblePapers, sourceRoles, directoryConcepts, glossarySourceLinks, mobileOverflow: overflow, consoleErrors }, null, 2));

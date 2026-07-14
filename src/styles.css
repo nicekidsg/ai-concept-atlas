@@ -8,6 +8,7 @@
   --blue: #0d5fea;
   --blue-soft: #e8f0ff;
   --coral: #f36b4d;
+  --coral-soft: #fff0eb;
   --line: #cfd1cf;
   --muted: #666b70;
   --serif: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
@@ -256,6 +257,15 @@ button {
   letter-spacing: 0.04em;
 }
 
+.concept-labels .verified-source {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border-color: #afd5bc;
+  background: #eef8f1;
+  color: #24633a;
+}
+
 .concept-actions {
   display: flex;
   gap: 14px;
@@ -287,6 +297,50 @@ button {
   margin: 0 0 16px;
   font-size: 18px;
   line-height: 1.65;
+}
+
+.plain-definition {
+  color: #25282b;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.plain-definition small {
+  display: inline-block;
+  margin-right: 10px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--coral-soft);
+  color: #8a3e2e;
+  font-family: var(--sans);
+  font-size: 10px;
+  font-weight: 900;
+  vertical-align: 3px;
+}
+
+.source-context {
+  display: flex;
+  align-items: center;
+  gap: 6px 10px;
+  flex-wrap: wrap;
+  margin: -2px 0 18px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.source-context span {
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.source-context strong {
+  color: var(--ink);
+  font-size: 11px;
 }
 
 .point-list {
@@ -729,18 +783,30 @@ button {
 }
 
 .section-heading > p {
+  max-width: 280px;
   margin: 0 0 4px;
   color: var(--muted);
   font-size: 12px;
+  line-height: 1.45;
+  text-align: right;
 }
 
 .paper-row {
-  min-height: 82px;
+  min-height: 108px;
   display: grid;
   grid-template-columns: 32px minmax(180px, 1.05fr) minmax(170px, 0.95fr) 24px;
   align-items: center;
   gap: 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.source-role {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
 
 .row-number {
@@ -760,6 +826,13 @@ button {
 
 .paper-row > div > a:hover {
   text-decoration: underline;
+}
+
+.pending-source-title {
+  display: block;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .paper-meta {
@@ -842,6 +915,12 @@ button {
   line-height: 1.5;
 }
 
+.research-method {
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+  color: #4d5156;
+}
+
 .empty-state {
   margin: 30px 0;
   color: var(--muted);
@@ -861,6 +940,15 @@ button {
   padding-top: 8px;
   font-family: var(--serif);
   font-weight: 800;
+}
+
+.related > span small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 9px;
+  font-weight: 700;
 }
 
 .concept-directory {
